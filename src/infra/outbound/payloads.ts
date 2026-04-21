@@ -6,10 +6,7 @@ import {
   shouldSuppressReasoningPayload,
 } from "../../auto-reply/reply/reply-payloads.js";
 import type { ReplyPayload } from "../../auto-reply/types.js";
-import {
-  resolveSilentReplyPolicy,
-  resolveSilentReplyRewriteEnabled,
-} from "../../config/silent-reply.js";
+import { resolveSilentReplySettings } from "../../config/silent-reply.js";
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
 import {
   hasInteractiveReplyBlocks,
@@ -165,13 +162,7 @@ export function createOutboundPayloadPlan(
   // Intentionally scoped to channel-agnostic normalization and projection inputs.
   // Transport concerns (queueing, hooks, retries), channel transforms, and
   // heartbeat-specific token semantics remain outside this plan boundary.
-  const resolvedSilentReplyPolicy = resolveSilentReplyPolicy({
-    cfg: context.cfg,
-    sessionKey: context.sessionKey,
-    surface: context.surface,
-    conversationType: context.conversationType,
-  });
-  const resolvedSilentReplyRewrite = resolveSilentReplyRewriteEnabled({
+  const resolvedSilentReplySettings = resolveSilentReplySettings({
     cfg: context.cfg,
     sessionKey: context.sessionKey,
     surface: context.surface,
@@ -206,10 +197,10 @@ export function createOutboundPayloadPlan(
       });
       continue;
     }
-    if (hasVisibleNonSilentContent || resolvedSilentReplyPolicy === "allow") {
+    if (hasVisibleNonSilentContent || resolvedSilentReplySettings.policy === "allow") {
       continue;
     }
-    if (!resolvedSilentReplyRewrite) {
+    if (!resolvedSilentReplySettings.rewrite) {
       const visibleSilentPayload: ReplyPayload = {
         ...entry.payload,
         text: entry.payload.text?.trim() || "NO_REPLY",
