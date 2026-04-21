@@ -112,6 +112,8 @@ function resolveLoopDetectionConfig(config?: ToolLoopDetectionConfig): ResolvedL
  * Uses tool name + deterministic JSON serialization digest of params.
  */
 export function hashToolCall(toolName: string, params: unknown): string {
+  // Handle undefined params to prevent digestStable from receiving undefined
+  if (params === undefined) return `${toolName}:undefined`;
   return `${toolName}:${digestStable(params)}`;
 }
 
@@ -129,6 +131,10 @@ function stableStringify(value: unknown): string {
 
 function digestStable(value: unknown): string {
   const serialized = stableStringifyFallback(value);
+  // Guard against undefined being passed to createHash
+  if (serialized === undefined) {
+    return createHash("sha256").update("undefined").digest("hex");
+  }
   return createHash("sha256").update(serialized).digest("hex");
 }
 
